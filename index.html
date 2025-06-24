@@ -198,7 +198,7 @@
                             userInput()
                         }else if (value.startsWith('nano ')) {
                             const fileName = value.split(' ')[1];
-                            fetch("./txt/" + fileName)
+                            fetch("txt/" + fileName)
                                 .then(response => {
                                     if (!response.ok) throw new Error('File not found');
                                     return response.text();
