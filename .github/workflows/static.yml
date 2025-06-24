@@ -1,28 +1,20 @@
-# Simple workflow for deploying static content to GitHub Pages
-name: Deploy static content to Pages
+name: Force Deploy All Files
 
 on:
-  # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
-  # Single deploy job since we're just deploying
   deploy:
     environment:
       name: github-pages
@@ -31,13 +23,49 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        
+      - name: Debug - List all files
+        run: |
+          echo "=== TOUS LES FICHIERS DANS LE REPO ==="
+          find . -type f | grep -v "\.git" | sort
+          echo ""
+          echo "=== CONTENU DE CHAQUE DOSSIER ==="
+          ls -la
+          ls -la font/ 2>/dev/null || echo "Pas de dossier font"
+          ls -la img/ 2>/dev/null || echo "Pas de dossier img" 
+          ls -la txt/ 2>/dev/null || echo "Pas de dossier txt"
+          
+      - name: Create deployment directory
+        run: |
+          mkdir -p ./deploy
+          # Copier TOUT explicitement
+          cp index.html ./deploy/ 2>/dev/null || echo "Pas d'index.html"
+          cp -r font ./deploy/ 2>/dev/null || echo "Pas de dossier font"
+          cp -r img ./deploy/ 2>/dev/null || echo "Pas de dossier img"
+          cp -r txt ./deploy/ 2>/dev/null || echo "Pas de dossier txt"
+          # Copier tous les autres fichiers à la racine
+          find . -maxdepth 1 -type f -name "*.html" -exec cp {} ./deploy/ \;
+          find . -maxdepth 1 -type f -name "*.css" -exec cp {} ./deploy/ \;
+          find . -maxdepth 1 -type f -name "*.js" -exec cp {} ./deploy/ \;
+          find . -maxdepth 1 -type f -name "*.txt" -exec cp {} ./deploy/ \;
+          find . -maxdepth 1 -type f -name "*.md" -exec cp {} ./deploy/ \;
+          
+      - name: Debug - List deployment directory
+        run: |
+          echo "=== CONTENU DU DOSSIER DEPLOY ==="
+          find ./deploy -type f | sort
+          echo ""
+          echo "=== TAILLE DES FICHIERS ==="
+          find ./deploy -type f -exec ls -lh {} \;
+          
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload entire repository
-          path: '.'
+          path: './deploy'
+          
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
