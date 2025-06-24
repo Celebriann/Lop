@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            @font-face {
+                font-family: pixel;
+                src: url('font/Unibody8pro-RegularSmallCaps.otf') format('opentype');
+                font-display: swap;
+            }
+            p {
+                font-family: pixel, 'Courier New', monospace;
+                -webkit-font-smoothing: none;
+                -moz-osx-font-smoothing: unset;
+                text-rendering: geometricPrecision;
+
+                image-rendering: pixelated;
+                image-rendering: -moz-crisp-edges;
+                image-rendering: crisp-edges;
+                margin-bottom: -25px;
+
+                white-space: pre;
+            }
+            body {
+                background-color: rgba(57, 114, 238, 0.932);
+                color: rgb(204, 0, 0);
+            }
+            .console{
+                width: 80%;
+                height: 80vh;
+                position: relative;
+                top: 1vh;
+                overflow-y: auto;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="console" id="console">
+
+        </div>
+        <script>
+            let curFile = 0
+            const filesTree = [
+                "home",
+                "home/img",
+                "home/vid",
+                "home/programs",
+            ]
+            
+            const lines = [
+                "Booting up...",
+                "Loading kernel...",
+                "Loading system files...", 
+                "Initializing hardware...",
+                "#",
+                "#",
+                "#",
+                "System ready.",
+                "Type 'help' for a list of commands."
+            ];
+            const commands = [
+                "help",
+            ]
+            const commandList = [
+                "help - Show this help message",
+                "ls - List files in the current directory",
+                "cd <directory> - Change directory",
+                "string - A simple string command",
+                "nano - Open the nano text editor",
+                " " //ligne de fin
+            ];
+            const homeLS = [
+                "img",
+                "vid",
+                "programs",
+                "aboutme.txt",
+                " "
+            ];
+            const img = [
+                "DSC00806_01.jpg        14 785 Ko",
+                "DSC00933_03.jpg        11 719 Ko",
+                "DSC00953.jpg          14 687 Ko",
+                " "
+            ]
+
+            const consoleDiv = document.getElementById('console');
+            let i = 0;
+            let commandIndex = 0;
+
+            function userInput() {
+                const en = 'USER@SYSTEM:~$ ' + filesTree[curFile] + ' >'
+                const emptyLine = document.createElement('p');
+                emptyLine.textContent = "";
+                consoleDiv.appendChild(emptyLine);
+
+                const promptDiv = document.createElement('div');
+
+                const promptSpan = document.createElement('span');
+                promptSpan.textContent = en;
+                promptSpan.style.fontFamily = 'pixel, "Courier New", monospace';
+                promptSpan.style.color = '#f9bc19';
+                
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = 'console-input';
+                input.style.background = 'transparent';
+                input.style.border = 'none';
+                input.style.color = 'white';
+                input.style.fontFamily = 'pixel, "Courier New", monospace';
+                input.style.outline = 'none';
+                input.autofocus = true;
+                input.size = 30; // Set the size of the input box
+                input.style.fontSize = '1.2em'; // Adjust font size as needed
+                input.style.lineHeight = '2.2'; // Adjust line height for better spacing
+
+                promptDiv.appendChild(promptSpan);
+                promptDiv.appendChild(input);
+                consoleDiv.appendChild(promptDiv);
+                input.focus();
+                consoleDiv.scrollTop = consoleDiv.scrollHeight; // Scroll to the bottom
+
+                document.getElementById('console-input')?.addEventListener('keydown', function(event) {
+                    if (event.key === 'Enter') {
+                        const value = input.value.trim();
+                         // Crée un span pour le prompt
+                        const promptClone = document.createElement('span');
+                        promptClone.textContent = promptSpan.textContent;
+                        promptClone.style.fontFamily = promptSpan.style.fontFamily;
+                        promptClone.style.color = promptSpan.style.color;
+                        promptClone.style.fontSize = promptSpan.style.fontSize;
+                        promptClone.style.lineHeight = promptSpan.style.lineHeight;
+
+                        // Crée un span pour la commande utilisateur
+                        const userCmd = document.createElement('span');
+                        userCmd.textContent = value;
+                        userCmd.style.fontFamily = input.style.fontFamily;
+                        userCmd.style.color = input.style.color;
+                        userCmd.style.fontSize = input.style.fontSize;
+                        userCmd.style.lineHeight = input.style.lineHeight;
+
+                        // Vide le promptDiv et ajoute les deux spans
+                        promptDiv.innerHTML = '';
+                        promptDiv.appendChild(promptClone);
+                        promptDiv.appendChild(userCmd);
+                        if (value === 'help') {
+                            commandIndex = 0
+                            LineToShow = commandList.slice()
+                            showCommandList()
+                        } else if (value === 'ls'){
+                            commandIndex = 0
+                            switch (filesTree[curFile]) {
+                                case 'home':
+                                    LineToShow = homeLS.slice();
+                                    break;
+                                case 'home/img':
+                                    LineToShow = img.slice();
+                                    break;
+                                case 'home/vid':
+                                    LineToShow = ['video1.mp4', 'video2.mp4', ' '];
+                                    break;
+                                case 'home/programs':
+                                    LineToShow = ['program1', 'program2', ' '];
+                                    break;
+                                default:
+                                    LineToShow = ['No files found', ' '];
+                            }
+                            showCommandList()
+                        } else if (value.startsWith('cd ')){
+                            const dir = value.split(' ')[1];
+                            if (curFile === 0) {
+                                if (dir.includes('.txt')) {
+                                    const err = document.createElement('p');
+                                    err.textContent = "This is not a directory: '" + dir + "'";
+                                    err.style.color = 'red';
+                                    consoleDiv.appendChild(err);
+                                } else {
+                                    const idx = filesTree.findIndex(path => path === dir || path.endsWith('/' + dir));
+                                    if (idx !== -1) {
+                                        curFile = idx;
+                                    } else {
+                                        const err = document.createElement('p');
+                                        err.textContent = "No such directory: '" + dir + "'";
+                                        err.style.color = 'red';
+                                        consoleDiv.appendChild(err);
+                                    }
+                                }
+                                
+                                console.log(curFile)
+                            } else if (curFile > 0 && dir === '..') {
+                                curFile = curFile - 1;
+                            } else {
+                                const err = document.createElement('p');
+                                err.textContent = "No such file or directory";
+                                err.style.color = 'red';
+                                err.style.fontFamily = 'pixel, "Courier New", monospace';
+                                consoleDiv.appendChild(err);
+                            }
+                            userInput()
+                        }else if (value.startsWith('nano ')) {
+                            const fileName = value.split(' ')[1];
+                            fetch("txt/" + fileName)
+                                .then(response => {
+                                    if (!response.ok) throw new Error('File not found');
+                                    return response.text();
+                                })
+                                .then(text => {
+                                    LineToShow = text.split('\n');
+                                    commandIndex = 0;
+                                    showCommandList();
+                                })
+                        }
+                        else {
+                            userInput()
+                        }
+                    }
+                });
+            }
+            let LineToShow = []
+            function showCommandList() {
+                if (commandIndex < LineToShow.length) {
+                    const p = document.createElement('p');
+                    p.textContent = LineToShow[commandIndex++];
+                    p.style.color = 'white'
+                    consoleDiv.appendChild(p);
+                    consoleDiv.scrollTop = consoleDiv.scrollHeight; // Scroll to the bottom
+                    setTimeout(showCommandList, 200); // Add next line after 1 second
+                } else {
+                    LineToShow = []
+                    userInput(); // Call userInput when all lines are added
+                }
+            }
+            function addLine() {
+                if (i < lines.length) {
+                    const p = document.createElement('p');
+                    p.textContent = lines[i++];
+                    consoleDiv.appendChild(p);
+                    consoleDiv.scrollTop = consoleDiv.scrollHeight; // Scroll to the bottom
+                    if (i == 2 || i == 3) {
+                        setTimeout(addLine, 2000);
+                    } else {
+                        setTimeout(addLine, 700); // Add next line after 1 second
+                    }
+                     // Add next line after 1 second
+                } else {
+                    userInput(); // Call userInput when all lines are added
+                }
+            }
+            
+           
+            document.add
+            window.onload = addLine
+        </script>
+    </body>
+</html>
