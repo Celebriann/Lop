@@ -25,11 +25,21 @@
                 color: rgb(204, 0, 0);
             }
             .console{
-                width: 80%;
+                width: 65%;
                 height: 80vh;
                 position: relative;
                 top: 1vh;
                 overflow-y: auto;
+                border: 1px solid black;
+            }
+            .editor {
+                width: 33%;
+                height: 80vh;
+                position: relative;
+                top: -79.15vh;
+                left: 66%;
+                overflow-y: auto;
+                border: 1px solid black;
             }
         </style>
     </head>
@@ -37,6 +47,7 @@
         <div class="console" id="console">
 
         </div>
+        <div class="editor" id="editor"></div>
         <script>
             let curFile = 0
             const filesTree = [
@@ -65,7 +76,6 @@
                 "ls - List files in the current directory",
                 "cd <directory> - Change directory",
                 "string - A simple string command",
-                "nano - Open the nano text editor",
                 " " //ligne de fin
             ];
             const homeLS = [
@@ -196,7 +206,7 @@
                                 consoleDiv.appendChild(err);
                             }
                             userInput()
-                        }else if (value.startsWith('nano ')) {
+                        }else if (value.startsWith('string ')) {
                             const fileName = value.split(' ')[1];
                             fetch("txt/" + fileName)
                                 .then(response => {
