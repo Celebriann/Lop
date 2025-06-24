@@ -5,7 +5,6 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
-
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -29,24 +28,37 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          # Fetch full history for proper git info
           fetch-depth: 0
+          
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.1'
           bundler-cache: true
+          
       - name: Setup Pages
         uses: actions/configure-pages@v5
         
+      - name: Install dependencies
+        run: |
+          if [ -f "Gemfile" ]; then
+            bundle install
+          else
+            gem install jekyll bundler
+          fi
+          
       - name: Build with Jekyll
-        uses: actions/jekyll-build-pages@v1
-        with:
-          source: ./
-          destination: ./_site
+        run: |
+          bundle exec jekyll build --destination ./_site
+        env:
+          JEKYLL_ENV: production
+          
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
-        with: 
-          path: ./
+        with:
+          path: ./_site
+
   # Deployment job
   deploy:
     environment:
