@@ -37,7 +37,9 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           # Upload entire repository
-          path: '.'
+          path: 
+            - index.html
+            - font/
           #  index.html
           #  font/
       - name: Deploy to GitHub Pages
