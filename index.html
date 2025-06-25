@@ -23,6 +23,7 @@
             body {
                 background-color: rgba(57, 114, 238, 0.932);
                 color: rgb(204, 0, 0);
+                overflow: hidden;;
             }
             .console{
                 width: 65%;
@@ -63,8 +64,6 @@
                 0% { background-position-y: 0; }
                 100% { background-position-y: 6px; }
             }
-
-            /* Ajoute à ton <style> */
             
             
             .console, .console p {
@@ -89,6 +88,7 @@
         <div class="editor" id="editor"></div>
         <script>
             let curFile = 0
+            var isBarFinished = false
             const filesTree = [
                 "home",
                 "home/img",
@@ -115,20 +115,42 @@
                 "ls - List files in the current directory",
                 "cd <directory> - Change directory",
                 "string - A simple string command",
+                "open <file> - Open a file",
                 " " //ligne de fin
             ];
-            const homeLS = [
+            const home = [
                 "img",
                 "vid",
                 "programs",
                 "aboutme.txt",
                 " "
             ];
+            const homeimg = [
+                "DSC00806_01.jpg",
+                "DSC00933_03.jpg",
+                "DSC00953.jpg",
+                " "
+            ]
             const img = [
                 "DSC00806_01.jpg        14 785 Ko",
                 "DSC00933_03.jpg        11 719 Ko",
                 "DSC00953.jpg          14 687 Ko",
                 " "
+            ]
+            const dircont = [
+                [
+                    "img",
+                    "vid",
+                    "programs",
+                    "aboutme.txt",
+                    " "
+                ],
+                [
+                    "DSC00806_01.jpg",
+                    "DSC00933_03.jpg",
+                    "DSC00953.jpg",
+                    " "
+                ]
             ]
 
             const consoleDiv = document.getElementById('console');
@@ -199,7 +221,7 @@
                             commandIndex = 0
                             switch (filesTree[curFile]) {
                                 case 'home':
-                                    LineToShow = homeLS.slice();
+                                    LineToShow = dircont[0].slice();
                                     break;
                                 case 'home/img':
                                     LineToShow = img.slice();
@@ -246,17 +268,61 @@
                             }
                             userInput()
                         }else if (value.startsWith('string ')) {
+                            
                             const fileName = value.split(' ')[1];
-                            fetch("txt/" + fileName)
-                                .then(response => {
-                                    if (!response.ok) throw new Error('File not found');
-                                    return response.text();
-                                })
-                                .then(text => {
-                                    LineToShow = text.split('\n');
-                                    commandIndex = 0;
-                                    showCommandList();
-                                })
+                            var notexisting = true
+                            for (let i = 0; i < dircont[curFile].length; i++){
+                                if (dircont[curFile][i] === fileName) {
+                                    fetch("txt/" + fileName)
+                                        .then(response => {
+                                            if (!response.ok) throw new Error('File not found');
+                                            return response.text();
+                                        })
+                                        .then(text => {
+                                            LineToShow = text.split('\n');
+                                            commandIndex = 0;
+                                            showCommandList();
+                                        })
+                                    notexisting = false
+                                    break;
+                                }
+                                
+                            }
+                            if (notexisting) {
+                                const err = document.createElement('p');
+                                err.textContent = "No such file: '" + fileName + "'";
+                                err.style.color = 'red';
+                                consoleDiv.appendChild(err);
+                            }
+                            userInput()
+                            
+                        } else if (value.startsWith('open ')) {
+                            const fileName = value.split(' ')[1];
+                            var notexisting = true
+                            for (let i = 0; i < dircont[curFile].length; i++){
+                                if (dircont[curFile][i] === fileName) {
+                                    notexisting = false
+                                    break;
+                                }
+                                
+                            }
+                            if (notexisting) {
+                                const err = document.createElement('p');
+                                err.textContent = "No such file: '" + fileName + "'";
+                                err.style.color = 'red';
+                                consoleDiv.appendChild(err);
+                            }
+                            commandIndex = 0
+                            loadingBar()
+                            if (!isBarFinished) {
+                                const ed = document.getElementById('editor')
+                                if (fileName.includes('.jpg') || fileName.includes('.jpeg') || fileName.includes('.png')) {
+                                    const img = document.createElement('img')
+                                    img.src = './img/' + fileName
+                                    ed.appendChild(img)
+                                }
+                            }
+                            
                         }
                         else {
                             userInput()
@@ -265,6 +331,30 @@
                 });
             }
             let LineToShow = []
+            function loadingBar() {
+                let bar = document.getElementById('bar');
+                const lb = []
+                if (!bar) {
+                    bar = document.createElement('p');
+                    bar.id = 'bar';
+                    bar.style.color = 'purple';
+                    consoleDiv.appendChild(bar);
+                }
+                
+                bar.textContent = "#".repeat(commandIndex + 1)
+
+                consoleDiv.scrollTop = consoleDiv.scrollHeight; // Scroll to the bottom
+                commandIndex++
+                if (commandIndex < 20) {
+                    setTimeout(loadingBar, 200); // Add next line after 1 second
+                } else {
+                    
+                
+                    isBarFinished = true
+                    commandIndex = 0;
+                    userInput();
+                }
+            }
             function showCommandList() {
                 if (commandIndex < LineToShow.length) {
                     const p = document.createElement('p');
