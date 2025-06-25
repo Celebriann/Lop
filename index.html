@@ -300,17 +300,6 @@
             window.onload = addLine
         </script>
         <script>
-            // Gère les effets de style de la page
-            function randomRGBSplit() {
-                if (Math.random() < 0.18) { // 18% de chance à chaque tick
-                    document.body.classList.add('rgb-split');
-                    setTimeout(() => {
-                        document.body.classList.remove('rgb-split');
-                    }, 600);
-                }
-                setTimeout(randomRGBSplit, 800 + Math.random() * 1200);
-            }
-            randomRGBSplit();
         </script>
     </body>
 </html>
