@@ -87,6 +87,13 @@
         </div>
         <div class="editor" id="editor"></div>
         <script>
+            
+            document.addEventListener('contextmenu', function(e) {
+                //e.preventDefault(); //désactive les fonction de base ex: clique droit
+            })
+            function sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms))
+            }
             let curFile = 0
             var isBarFinished = false
             const filesTree = [
@@ -116,6 +123,9 @@
                 "cd <directory> - Change directory",
                 "string - A simple string command",
                 "open <file> - Open a file",
+                "color -f - Change forground color, -fa - Change foreground for user and console text, -b - Change background color",
+                "history - Show input history",
+                "account - Connect to your account",
                 " " //ligne de fin
             ];
             const home = [
@@ -152,10 +162,33 @@
                     " "
                 ]
             ]
+            
+            const history = []
 
             const consoleDiv = document.getElementById('console');
             let i = 0;
             let commandIndex = 0;
+            
+            const colors = (color) => {
+                switch (color) {
+                    case "white": 
+                        return "rgba(255, 255, 255, 1)"
+                    case "black": 
+                        return "rgba(0, 0, 0, 0.932)"
+                    case "green": 
+                        return "rgba(68, 205, 75, 0.932)"
+                    case "red": 
+                        return "rgba(204, 0, 0, 0.932)"
+                    case "orange": 
+                        return "rgba(232, 160, 24, 0.932)"
+                    case "yellow":
+                        return "rgba(249, 188, 25, 0.932)"
+                    case "blue": 
+                        return "rgba(57, 114, 238, 0.932)"
+                }
+            }
+            var defaultColor = colors("orange")
+            var defaultUserColor = colors("white")
 
             function userInput() {
                 const en = 'USER@SYSTEM:~$ ' + filesTree[curFile] + ' >'
@@ -168,21 +201,22 @@
                 const promptSpan = document.createElement('span');
                 promptSpan.textContent = en;
                 promptSpan.style.fontFamily = 'pixel, "Courier New", monospace';
-                promptSpan.style.color = '#f9bc19';
-                
+                promptSpan.style.color = defaultColor;
+                promptSpan.className = "defaultText"
 
                 const input = document.createElement('input');
                 input.type = 'text';
                 input.id = 'console-input';
                 input.style.background = 'transparent';
                 input.style.border = 'none';
-                input.style.color = 'white';
+                input.style.color = defaultUserColor;
                 input.style.fontFamily = 'pixel, "Courier New", monospace';
                 input.style.outline = 'none';
                 input.autofocus = true;
                 input.size = 30; // Set the size of the input box
                 input.style.fontSize = '1.2em'; // Adjust font size as needed
                 input.style.lineHeight = '2.2'; // Adjust line height for better spacing
+                input.className = "userInput"
 
                 promptDiv.appendChild(promptSpan);
                 promptDiv.appendChild(input);
@@ -190,9 +224,16 @@
                 input.focus();
                 consoleDiv.scrollTop = consoleDiv.scrollHeight; // Scroll to the bottom
 
-                document.getElementById('console-input')?.addEventListener('keydown', function(event) {
+                
+                
+
+                document.getElementById('console-input')?.addEventListener('keydown', async function(event) {
                     if (event.key === 'Enter') {
+
+                        
+
                         const value = input.value.trim();
+                        history.push(value)
                          // Crée un span pour le prompt
                         const promptClone = document.createElement('span');
                         promptClone.textContent = promptSpan.textContent;
@@ -200,6 +241,7 @@
                         promptClone.style.color = promptSpan.style.color;
                         promptClone.style.fontSize = promptSpan.style.fontSize;
                         promptClone.style.lineHeight = promptSpan.style.lineHeight;
+                        promptClone.className = promptSpan.className
 
                         // Crée un span pour la commande utilisateur
                         const userCmd = document.createElement('span');
@@ -208,6 +250,7 @@
                         userCmd.style.color = input.style.color;
                         userCmd.style.fontSize = input.style.fontSize;
                         userCmd.style.lineHeight = input.style.lineHeight;
+                        userCmd.className = input.className
 
                         // Vide le promptDiv et ajoute les deux spans
                         promptDiv.innerHTML = '';
@@ -311,18 +354,60 @@
                                 err.textContent = "No such file: '" + fileName + "'";
                                 err.style.color = 'red';
                                 consoleDiv.appendChild(err);
+                                userInput()
                             }
-                            commandIndex = 0
-                            loadingBar()
-                            if (!isBarFinished) {
+                            
+                            
+                            else if (!isBarFinished) {
+                                commandIndex = 0
+                                loadingBar()
+                                await sleep(3000)
                                 const ed = document.getElementById('editor')
                                 if (fileName.includes('.jpg') || fileName.includes('.jpeg') || fileName.includes('.png')) {
                                     const img = document.createElement('img')
+                                    img.id = 'openedimg'
+                                    img.style.width = "600px"
+                                    img.style.height = "600px"
+                                    img.style.objectFit ="contain"
                                     img.src = './img/' + fileName
-                                    ed.appendChild(img)
+                                    consoleDiv.appendChild(img)
                                 }
                             }
                             
+                        } else if (value === 'history') {
+                            commandIndex = 0
+                            LineToShow = history.slice()
+                            showCommandList()
+                        } else if (value.startsWith('color ')) {
+                            const opt = value.split(' ')[1]
+                            const set = value.split(' ')[2]
+                            if (opt === '-f') {
+                                document.querySelectorAll(".defaultText").forEach(el => {
+                                    el.style.color = colors(set)
+                                })
+                                defaultColor = colors(set)
+                                userInput()
+                            } else if (opt === '-b') {
+                                document.body.style.backgroundColor = colors(set)
+
+                                userInput()
+                            } else if (opt === '-fa') {
+                                document.querySelectorAll(".defaultText").forEach(el => {
+                                    el.style.color = colors(set)
+                                })
+                                document.querySelectorAll(".userInput").forEach(el => {
+                                    el.style.color = colors(set)
+                                })
+                                defaultUserColor = colors(set)
+                                defaultColor = colors(set)
+                                userInput()
+                            }
+                        } else if (value === "account") {
+                            const err = document.createElement('p');
+                            err.textContent = "This command is not yet accessible";
+                            err.style.color = 'purple';
+                            consoleDiv.appendChild(err);
+                            userInput()
                         }
                         else {
                             userInput()
